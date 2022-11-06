@@ -1,6 +1,6 @@
 FROM python:3.8
 
-RUN pip install Flask waitress
+RUN pip install Flask waitress 
 
 RUN apt-get update && apt-get install -y \
     software-properties-common \
@@ -17,6 +17,7 @@ RUN apt-get install -y vim
 
 ENV SRC_DIR /usr/bin/src/webapp/src
 ENV COMPILE_DIR /tmp/compilations
+ENV PORT 3457
 
 RUN mkdir ${COMPILE_DIR}
 
