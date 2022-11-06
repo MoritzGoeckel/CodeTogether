@@ -4,7 +4,6 @@ import shlex
 from subprocess import Popen, PIPE, TimeoutExpired
 
 COMPILE_DIR = os.getenv('COMPILE_DIR')
-PORT = os.getenv('PORT')
 
 def write(path, content):
     f = open(path, "w")

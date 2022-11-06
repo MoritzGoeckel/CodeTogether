@@ -1,6 +1,8 @@
+import os
 from flask import Flask, request, jsonify
-from shared import write, run, COMPILE_DIR, PORT
 from execute import execute
+
+PORT = os.getenv('PORT')
 
 app = Flask(__name__)
 
@@ -13,7 +15,7 @@ def index():
     if 'code' not in data:
         return {'error': "'code' not in request"}
 
-    result = execute(data['code'], "js")
+    result = execute(data['code'], data['lang'])
 
     return jsonify(result)
 
