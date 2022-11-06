@@ -1,5 +1,8 @@
 from flask import Flask, request, jsonify
 import os
+import sys
+import shlex
+from subprocess import Popen, PIPE, TimeoutExpired
 
 COMPILE_DIR = os.getenv('COMPILE_DIR')
 PORT = os.getenv('PORT')
@@ -11,21 +14,24 @@ def write(path, content):
     f.write(content)
     f.close()
 
-def run(path):
-    stream = os.popen(path)
-    output = stream.read()
-    return output
-
-def runLimited(command):
-    result = {'output': "", 'timeout': False}
-    result['output'] = run(command)
-    # result['timeout'] = True # kill the process
+def run(command):
+    result = {'output': "", 'timeout': False, 'error': ""}
+    process = Popen(shlex.split(command), stdout=PIPE, stderr=PIPE)
+    try:
+        outs, errs = process.communicate(timeout=1)
+        outs = outs.decode(sys.stdin.encoding)
+        errs = errs.decode(sys.stdin.encoding)
+        result['output'] = outs
+        result['error'] = errs
+    except TimeoutExpired:
+        process.kill()
+        result['timeout'] = True
     return result
 
 def execute(content, lang):
     filename = COMPILE_DIR + "/test.js"
     write(filename, content)
-    result = runLimited('sudo -u run_user node ' + filename)
+    result = run('sudo -u run_user node ' + filename)
     os.remove(filename)
     return result
 

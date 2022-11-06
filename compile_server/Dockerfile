@@ -1,6 +1,6 @@
 FROM python:3.8
 
-RUN pip install Flask waitress 
+RUN pip install Flask waitress
 
 RUN apt-get update && apt-get install -y \
     software-properties-common \
