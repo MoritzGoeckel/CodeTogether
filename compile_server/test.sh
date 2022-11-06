@@ -1,1 +1,1 @@
-curl -iv localhost:3457
+curl localhost:3457 -d '{"foo": "bar"}' -H 'Content-Type: application/json'
