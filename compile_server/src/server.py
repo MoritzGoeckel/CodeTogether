@@ -1,39 +1,8 @@
 from flask import Flask, request, jsonify
-import os
-import sys
-import shlex
-from subprocess import Popen, PIPE, TimeoutExpired
-
-COMPILE_DIR = os.getenv('COMPILE_DIR')
-PORT = os.getenv('PORT')
+from shared import write, run, COMPILE_DIR, PORT
+from execute import execute
 
 app = Flask(__name__)
-
-def write(path, content):
-    f = open(path, "w")
-    f.write(content)
-    f.close()
-
-def run(command):
-    result = {'output': "", 'timeout': False, 'error': ""}
-    process = Popen(shlex.split(command), stdout=PIPE, stderr=PIPE)
-    try:
-        outs, errs = process.communicate(timeout=1)
-        outs = outs.decode(sys.stdin.encoding)
-        errs = errs.decode(sys.stdin.encoding)
-        result['output'] = outs
-        result['error'] = errs
-    except TimeoutExpired:
-        process.kill()
-        result['timeout'] = True
-    return result
-
-def execute(content, lang):
-    filename = COMPILE_DIR + "/test.js"
-    write(filename, content)
-    result = run('sudo -u run_user node ' + filename)
-    os.remove(filename)
-    return result
 
 @app.post("/")
 def index():
@@ -46,7 +15,7 @@ def index():
 
     result = execute(data['code'], "js")
 
-    return jsonify({'error': "", 'output': result['output'], 'timeout': result['timeout']})
+    return jsonify(result)
 
 if __name__=='__main__':
     from waitress import serve   
