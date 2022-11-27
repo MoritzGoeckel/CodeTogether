@@ -1,15 +1,27 @@
 // Server
 
+const inform = (message) => {
+  console.log("Info: " + message)
+}
+
+const warn = (message) => {
+  console.log("Warning: " + message)
+}
+
+const debug = (message) => {
+  // console.log("Debug: " + message)
+}
+
 const express = require('express')
 const app = express()
 const port = 3000
 
-app.get('/', (req, res) => {
+/*app.get('/', (req, res) => {
   res.send('Hello World!')
-})
+})*/
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  inform("http server listening on port " + port)
 })
 
 app.use(express.static('static'))
@@ -41,7 +53,7 @@ function exitRooms(connection){
     rooms[roomId]["clients"] = rooms[roomId]["clients"].filter((elem) => { return elem != connection.id })
     if(rooms[roomId]["clients"].length == 0){
       delete rooms[roomId] // room is now empty
-      console.log("Deleting room: " + roomId)
+      debug("Deleting room: " + roomId)
     }
   }
 }
@@ -90,8 +102,8 @@ let handlers = {
 
     request.post(requestOptions, (err, res, body) => {
       if(err != undefined){
-        console.log("Error connecting to compile server:")
-        console.log(err)
+        warn("Error connecting to compile server:")
+        warn(err)
       }
 
       let message = JSON.stringify({"room": roomId, "type": "run_res", "lang": req["lang"], "content": JSON.parse(body)})
@@ -118,7 +130,7 @@ wss.on('connection', function connection(connection) {
   connection.on('pong', heartbeat);
   connection.on('message', function message(data) {
     try{
-      console.log('received: %s', data)
+      debug('Received message: ' + data)
       let req = JSON.parse(data)
       let result = handlers[req["type"]](connection, req)
       if(result != null){
@@ -135,9 +147,9 @@ wss.on('connection', function connection(connection) {
 const checkAliveConnectionsInterval = setInterval(function ping() {
   wss.clients.forEach(function each(connection) {
     if (connection.isAlive === false) {
-      console.log("Terminating dead connection")
+      debug("Terminating connection " + connection.id)
+      exitRooms(connection)
       delete idToConnection[connection.id]
-      // TODO: remove from rooms
       return connection.terminate();
     }
 
@@ -150,13 +162,7 @@ wss.on('close', function close() {
   clearInterval(checkAliveConnectionsInterval);
 });
 
-console.log("Listening to " + wsPort + " for socket")
+inform("ws server listening on port " + wsPort)
 
 // Messages:
-// {"room": "...", "type": "code_full",   "lang": "...", "content": "..."}
-// {"room": "...", "type": "code_update", "lang": "...", "content": "..."}
-// {"room": "...", "type": "run_req",     "lang": "...", "content": "..."}
-// {"room": "...", "type": "run_res",     "lang": "...", "content": "..."}
-// {               "type": "room_req",    "lang": "...", "content": "..."}
-// {"room": "...", "type": "room_res",    "lang": "...", "content": "..."}
-// {"room": "...", "type": "room_join" }
+// {"room": "...", "type": "code_update", "lang": "...", "content": "..."} // TODO

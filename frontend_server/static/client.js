@@ -44,7 +44,7 @@ export function connect(jar){
     }
 
     jar.onUpdate(code => {
-        console.log("Update code, send: " + code); // use partial updates. Don't always update, have a cooldown
+        // console.log("Update code, send: " + code); // TODO use partial updates. Don't always update, have a cooldown
         if(code != prevCode){
             let request = {"room": roomId, "type": "code_full", "lang": "js", "content": jar.toString()}
             ws.send(JSON.stringify(request))
