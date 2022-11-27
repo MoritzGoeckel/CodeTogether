@@ -25,13 +25,34 @@ const ws = require('ws')
 const wsPort = 3080;
 const wss = new ws.WebSocketServer({ port: wsPort });
 
+function heartbeat() {
+  this.isAlive = true;
+}
+
 wss.on('connection', function connection(connection) {
+  connection.on('pong', heartbeat);
   connection.on('message', function message(data) {
     console.log('received: %s', data)
-    connection.send('pong')
+    connection.send('hallo')
   });
 
   connection.send('hi')
+});
+
+const checkAliveConnectionsInterval = setInterval(function ping() {
+  wss.clients.forEach(function each(connection) {
+    if (connection.isAlive === false) {
+      console.log("Terminating dead connection")
+      return connection.terminate();
+    }
+
+    connection.isAlive = false;
+    connection.ping(); // This provokes a pong message
+  });
+}, 30000);
+
+wss.on('close', function close() {
+  clearInterval(checkAliveConnectionsInterval);
 });
 
 console.log("Listening to " + wsPort + " for socket")
