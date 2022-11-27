@@ -1,3 +1,4 @@
 CodeJar
-Framework: NextJs
 Components MUI React
+Sometimes reset the compile server
+More languages
