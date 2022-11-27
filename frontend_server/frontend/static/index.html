@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>Test</title>
+
+  </head>
+  <body>
+
+    <div class="editor language-js" style="width: 50%; height: 30em; font-family: 'Source Code Pro', monospace;"></div>
+
+    <link rel="stylesheet" href="/dracula.min.css">
+
+    <script src="/highlight.min.js"></script>
+    <script type="module">
+        import {CodeJar} from '/codejar.js'
+        import {withLineNumbers} from '/linenumbers.js';
+
+        const highlight = editor => {
+            editor.textContent = editor.textContent
+            hljs.highlightBlock(editor) // specify language
+        }
+            
+        console.log(highlight)
+
+        let jar = CodeJar(document.querySelector('.editor'), withLineNumbers(highlight))
+
+        jar.updateCode('let foo = bar');
+
+        let code = jar.toString();
+
+        jar.onUpdate(code => {
+            console.log(code);
+        });
+    </script>
+  </body>
+</html>
