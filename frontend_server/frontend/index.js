@@ -1,3 +1,5 @@
+// Server
+
 const express = require('express')
 const app = express()
 const port = 3000
@@ -21,28 +23,121 @@ app.get('/users/:userId', (req, res) => {
   return res.send(users[req.params.userId]);
 });*/
 
+// Socket
+
+const request = require('request');
+
+function generateId(){
+  return String(Date.now())
+}
+
+let idToConnection = {}
+let rooms = {}
+let connectionIdToRoom = {}
+
+function exitRooms(connection){
+  if(connection.id in connectionIdToRoom){
+    let roomId = connectionIdToRoom[connection.id]
+    rooms[roomId]["clients"] = rooms[roomId]["clients"].filter((elem) => { return elem != connection.id })
+    if(rooms[roomId]["clients"].length == 0){
+      delete rooms[roomId] // room is now empty
+      console.log("Deleting room: " + roomId)
+    }
+  }
+}
+
+let handlers = {
+  "room_req": (connection, req) => { 
+    exitRooms(connection)
+    let roomId = generateId()
+    rooms[roomId] = { "code": req["content"], "lang": req["lang"], "clients": [connection.id] }
+    connectionIdToRoom[connection.id] = roomId
+    return { "room": roomId, "type": "room_res", "lang": req["lang"], "content": rooms[roomId]["code"] }
+  },
+  "code_full": (connection, req) => { 
+    let roomId = req["room"]
+    let room = rooms[roomId]
+    room["code"] = req["content"]
+    room["lang"] = req["lang"]
+    room["code"] = req["content"]
+    let message = JSON.stringify({"room": roomId, "type": "code_full", "lang": room["lang"], "content": room["code"]})
+    room["clients"].forEach((conId) => { 
+      if(conId != connection.id) {
+        idToConnection[conId].send(message) 
+      }
+    })
+    return null 
+  },
+  "room_join": (connection, req) => { 
+    exitRooms(connection)
+    let roomId = req["room"]
+    let room = rooms[roomId]
+    room["clients"].push(connection.id)
+    return {"room": roomId, "type": "code_full", "lang": room["lang"], "content": room["code"]} 
+  },
+  "run_req": (connection, req) => {
+    let roomId = req["room"]
+    let room = rooms[roomId]
+    // TODO: Room code?, Room lang?
+    let compileRequest = {"lang": req["lang"], "code": req["content"]}
+
+    let requestOptions = {
+      url: 'http://127.0.0.1:3457', 
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(compileRequest) 
+    }
+
+    request.post(requestOptions, (err, res, body) => {
+      if(err != undefined){
+        console.log("Error connecting to compile server:")
+        console.log(err)
+      }
+
+      let message = JSON.stringify({"room": roomId, "type": "run_res", "lang": req["lang"], "content": JSON.parse(body)})
+      room["clients"].forEach((conId) => { idToConnection[conId].send(message) })
+    })
+
+    return null 
+  },
+  "none": (connection, req) => { return null }
+}
+
 const ws = require('ws')
 const wsPort = 3080;
 const wss = new ws.WebSocketServer({ port: wsPort });
 
 function heartbeat() {
-  this.isAlive = true;
+  this.isAlive = true
 }
 
 wss.on('connection', function connection(connection) {
+  connection.id = generateId()
+  idToConnection[connection.id] = connection
+
   connection.on('pong', heartbeat);
   connection.on('message', function message(data) {
-    console.log('received: %s', data)
-    connection.send('hallo')
+    try{
+      console.log('received: %s', data)
+      let req = JSON.parse(data)
+      let result = handlers[req["type"]](connection, req)
+      if(result != null){
+        connection.send(JSON.stringify(result))
+      }
+    } catch (e){
+      connection.send("Bad request: " + e)
+    }
   });
 
-  connection.send('hi')
+  connection.ping()
 });
 
 const checkAliveConnectionsInterval = setInterval(function ping() {
   wss.clients.forEach(function each(connection) {
     if (connection.isAlive === false) {
       console.log("Terminating dead connection")
+      delete idToConnection[connection.id]
+      // TODO: remove from rooms
       return connection.terminate();
     }
 
@@ -56,3 +151,12 @@ wss.on('close', function close() {
 });
 
 console.log("Listening to " + wsPort + " for socket")
+
+// Messages:
+// {"room": "...", "type": "code_full",   "lang": "...", "content": "..."}
+// {"room": "...", "type": "code_update", "lang": "...", "content": "..."}
+// {"room": "...", "type": "run_req",     "lang": "...", "content": "..."}
+// {"room": "...", "type": "run_res",     "lang": "...", "content": "..."}
+// {               "type": "room_req",    "lang": "...", "content": "..."}
+// {"room": "...", "type": "room_res",    "lang": "...", "content": "..."}
+// {"room": "...", "type": "room_join" }
