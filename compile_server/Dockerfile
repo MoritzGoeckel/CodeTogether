@@ -15,6 +15,9 @@ RUN echo "Node version: " && node --version
 RUN apt-get install -y sudo
 RUN apt-get install -y vim
 
+# For C++
+RUN apt-get install -y build-essential
+
 ENV SRC_DIR /usr/bin/src/webapp/src
 ENV COMPILE_DIR /tmp/compilations
 ENV PORT 3457
