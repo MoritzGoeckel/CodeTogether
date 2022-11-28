@@ -4,25 +4,28 @@
     <link rel="stylesheet" href="code_styles/github.min.css">
   </head>
   <body>
+    <div id="wrapper" style="text-align: center;">
+      <div id="inner" style="display: inline-block; width: 50%; text-align: left; box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; padding: 2em; margin-top: 2em;">
+        <div>Room:
+          <input type="text" value="_" id="room_id">
+          <button id="join_btn">Join</button>
+        </div>
 
-    <div style="margin-top: 1em;">Room:
-      <input type="text" value="_" id="room_id">
-      <button id="join_btn">Join</button>
+        <code id="editor" class="hljs" style="display: block; width: 80%; height: 30em; font-family: 'Source Code Pro', monospace; margin-top: 1em;"></code>
+
+        <div style="margin-top: 1em;">Language:
+          <select id="lang_options">
+            <option value="js">js</option>
+            <option value="py">py</option>
+            <option value="cpp">cpp</option>
+          </select>
+
+          <button id="run_btn">Run</button>
+        </div>
+
+        <div id="run_result" style="margin-top: 1em;"></div>
+      </div>
     </div>
-
-    <code id="editor" class="hljs" style="display: block; width: 50%; height: 30em; font-family: 'Source Code Pro', monospace; margin-top: 1em;"></code>
-
-    <div style="margin-top: 1em;">Language:
-      <select id="lang_options">
-        <option value="js">js</option>
-        <option value="py">py</option>
-        <option value="cpp">cpp</option>
-      </select>
-
-      <button id="run_btn">Run</button>
-    </div>
-
-    <div id="run_result" style="margin-top: 1em;"></div>
 
     <script src="/highlight.min.js"></script>
     <!-- <script src="//unpkg.com/@mui/material@latest/umd/material-ui.production.min.js"></script> -->
