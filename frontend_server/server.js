@@ -70,9 +70,7 @@ let handlers = {
     let roomId = req["room"]
     let room = rooms[roomId]
     room["code"] = req["content"]
-    room["lang"] = req["lang"]
-    room["code"] = req["content"]
-    let message = JSON.stringify({"room": roomId, "type": "code_full", "lang": room["lang"], "content": room["code"]})
+    let message = JSON.stringify({"room": roomId, "type": "code_full", "content": room["code"]})
     room["clients"].forEach((conId) => { 
       if(conId != connection.id) {
         idToConnection[conId].send(message) 
@@ -111,6 +109,19 @@ let handlers = {
     })
 
     return null 
+  },
+  "set_lang": (connection, req) => {
+    let roomId = req["room"]
+    let room = rooms[roomId]
+    if(room["lang"] != req["lang"]){
+      room["lang"] = req["lang"]
+      let message = JSON.stringify({"room": roomId, "type": "set_lang", "lang": req["lang"]})
+      room["clients"].forEach((conId) => { 
+        if(conId != connection.id) {
+          idToConnection[conId].send(message) 
+        }
+      })
+    }
   },
   "none": (connection, req) => { return null }
 }

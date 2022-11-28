@@ -2,7 +2,17 @@ let ws = new WebSocket("ws://v220221146664206314.happysrv.de:3080");
 
 let selectedRoomId = ""
 let prevCode = ""
-let selectedLanguage = "js"
+let selectedLanguage = document.querySelector('#lang_options').value
+
+function setSelectedLanguage(lang){
+    if(lang != selectedLanguage){
+        selectedLanguage = lang
+        // TODO: change highlight
+        if(document.querySelector('#lang_options').value != lang){
+            document.querySelector('#lang_options').value = lang
+        }
+    }
+}
 
 export function connect(jar){
     ws.onopen = function (event) {
@@ -14,11 +24,16 @@ export function connect(jar){
         "room_res": (message) => {
             document.querySelector('#room_id').value = message["room"]
             selectedRoomId = message["room"]
+            setSelectedLanguage(message["lang"])
         },
         "code_full": (message) => {
             let cursor = jar.save()
             jar.updateCode(message["content"])
             jar.restore(cursor)
+
+            if("lang" in message){
+                setSelectedLanguage(message["lang"])
+            }
         },
         "run_res": (message) => {
             let content = message["content"]
@@ -30,7 +45,13 @@ export function connect(jar){
             } else {
                 result = content["output"]
             }
-            document.querySelector('#run_result').textContent = result
+            setSelectedLanguage(message["lang"])
+
+            result = result.replaceAll("\n", "<br/>")
+            document.querySelector('#run_result').innerHTML = result
+        },
+        "set_lang": (message) => {
+            setSelectedLanguage(message["lang"])
         }
     }
 
@@ -47,7 +68,7 @@ export function connect(jar){
     jar.onUpdate(code => {
         // console.log("Update code, send: " + code); // TODO use partial updates. Don't always update, have a cooldown
         if(code != prevCode){
-            let request = {"room": selectedRoomId, "type": "code_full", "lang": selectedLanguage, "content": jar.toString()}
+            let request = {"room": selectedRoomId, "type": "code_full", "content": jar.toString()}
             ws.send(JSON.stringify(request))
             prevCode = code
         }
@@ -55,23 +76,18 @@ export function connect(jar){
 
     document.querySelector('#join_btn').onclick = () => { 
         selectedRoomId = document.querySelector('#room_id').value
-        let request = { "room": selectedRoomId, "type": "room_join" }
-        ws.send(JSON.stringify(request));
+        ws.send(JSON.stringify({ "room": selectedRoomId, "type": "room_join" }));
     }
 
     document.querySelector('#run_btn').onclick = () => { 
-        let request = { "room": selectedRoomId, "type": "run_req", "lang": selectedLanguage, "content": jar.toString()}
-        ws.send(JSON.stringify(request));
+        ws.send(JSON.stringify({"room": selectedRoomId, "type": "run_req", "lang": selectedLanguage, "content": jar.toString()}));
     }
 
     document.querySelector('#lang_options').onchange = () => { 
-        console.log("onChange")
         let newLanguage = document.querySelector('#lang_options').value   
         if(newLanguage != selectedLanguage){
-            console.log("override")
-            selectedLanguage = newLanguage
-            // TODO inform server
-            // TODO change highlighting
+            setSelectedLanguage(newLanguage)
+            ws.send(JSON.stringify({"room": selectedRoomId, "type": "set_lang", "lang": newLanguage}));
         }
     }
 }
