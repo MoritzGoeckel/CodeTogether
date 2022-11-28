@@ -1,18 +1,19 @@
 let ws = new WebSocket("ws://v220221146664206314.happysrv.de:3080");
 
-let roomId = ""
+let selectedRoomId = ""
 let prevCode = ""
+let selectedLanguage = "js"
 
 export function connect(jar){
     ws.onopen = function (event) {
-        let request = {"type": "room_req", "lang": "js", "content": jar.toString()}
+        let request = {"type": "room_req", "lang": selectedLanguage, "content": jar.toString()}
         ws.send(JSON.stringify(request));
     };
 
     const handlers = {
         "room_res": (message) => {
             document.querySelector('#room_id').value = message["room"]
-            roomId = message["room"]
+            selectedRoomId = message["room"]
         },
         "code_full": (message) => {
             let cursor = jar.save()
@@ -46,20 +47,31 @@ export function connect(jar){
     jar.onUpdate(code => {
         // console.log("Update code, send: " + code); // TODO use partial updates. Don't always update, have a cooldown
         if(code != prevCode){
-            let request = {"room": roomId, "type": "code_full", "lang": "js", "content": jar.toString()}
+            let request = {"room": selectedRoomId, "type": "code_full", "lang": selectedLanguage, "content": jar.toString()}
             ws.send(JSON.stringify(request))
             prevCode = code
         }
     });
 
     document.querySelector('#join_btn').onclick = () => { 
-        roomId = document.querySelector('#room_id').value
-        let request = { "room": roomId, "type": "room_join" }
+        selectedRoomId = document.querySelector('#room_id').value
+        let request = { "room": selectedRoomId, "type": "room_join" }
         ws.send(JSON.stringify(request));
     }
 
     document.querySelector('#run_btn').onclick = () => { 
-        let request = { "room": roomId, "type": "run_req", "lang": "js", "content": jar.toString()}
+        let request = { "room": selectedRoomId, "type": "run_req", "lang": selectedLanguage, "content": jar.toString()}
         ws.send(JSON.stringify(request));
+    }
+
+    document.querySelector('#lang_options').onchange = () => { 
+        console.log("onChange")
+        let newLanguage = document.querySelector('#lang_options').value   
+        if(newLanguage != selectedLanguage){
+            console.log("override")
+            selectedLanguage = newLanguage
+            // TODO inform server
+            // TODO change highlighting
+        }
     }
 }
