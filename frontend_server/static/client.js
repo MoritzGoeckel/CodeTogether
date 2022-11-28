@@ -7,10 +7,10 @@ let selectedLanguage = document.querySelector('#lang_options').value
 function setSelectedLanguage(lang){
     if(lang != selectedLanguage){
         selectedLanguage = lang
-        // TODO: change highlight
         if(document.querySelector('#lang_options').value != lang){
             document.querySelector('#lang_options').value = lang
         }
+        // TODO: Update highlight
     }
 }
 

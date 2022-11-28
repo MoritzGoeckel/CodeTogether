@@ -25,6 +25,7 @@ app.listen(port, () => {
 })
 
 app.use(express.static('static'))
+app.use(express.static('static/code_styles'))
 //app.use('/scripts', express.static('public'))
 
 /*app.get('/users', (req, res) => {

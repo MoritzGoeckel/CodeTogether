@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>Test</title>
-
+    <link rel="stylesheet" href="code_styles/agate.min.css">
   </head>
   <body>
 
@@ -16,13 +16,11 @@
       <option value="cpp">cpp</option>
     </select>
 
-    <div class="editor language-js" style="width: 50%; height: 30em; font-family: 'Source Code Pro', monospace;"></div>
+    <code id="editor" class="hljs" style="display: block; width: 50%; height: 30em; font-family: 'Source Code Pro', monospace;"></code>
 
     <button id="run_btn">Run</button>
 
     <div id="run_result"></div>
-
-    <link rel="stylesheet" href="/dracula.min.css">
 
     <script src="/highlight.min.js"></script>
     <!-- <script src="//unpkg.com/@mui/material@latest/umd/material-ui.production.min.js"></script> -->
@@ -32,13 +30,15 @@
         import {connect} from '/client.js';
 
         const highlight = editor => {
-            editor.textContent = editor.textContent
-            hljs.highlightBlock(editor) // specify language
+            const code = editor.textContent
+            const result = hljs.highlightAuto(code) 
+            //const result = hljs.highlightAuto(code, {language: "js", ignoreIllegals: true}) 
+            editor.innerHTML = result.value
         }
             
         console.log(highlight)
 
-        var jar = CodeJar(document.querySelector('.editor'), withLineNumbers(highlight))
+        var jar = CodeJar(document.querySelector('#editor'), withLineNumbers(highlight))
         jar.updateCode('let foo = bar');
 
         connect(jar)
