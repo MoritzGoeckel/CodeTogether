@@ -1,5 +1,5 @@
 export function withLineNumbers(highlight, options = {}) {
-    const opts = Object.assign({ class: "codejar-linenumbers", wrapClass: "codejar-wrap", width: "35px", backgroundColor: "rgba(128, 128, 128, 0.15)", color: "" }, options);
+    const opts = Object.assign({ class: "codejar-linenumbers", wrapClass: "codejar-wrap", width: "35px", backgroundColor: "rgba(128, 128, 128, 0.0)", color: "rgba(255, 255, 255, 0.5)" }, options);
     let lineNumbers;
     return function (editor) {
         highlight(editor);

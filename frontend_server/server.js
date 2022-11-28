@@ -80,10 +80,13 @@ let handlers = {
     return null 
   },
   "room_join": (connection, req) => { 
-    exitRooms(connection)
     let roomId = req["room"]
     let room = rooms[roomId]
-    room["clients"].push(connection.id)
+    if(roomId != connectionIdToRoom[connection.id]){
+      // Don't exit the room, if you are going to join the same anyways
+      exitRooms(connection)
+      room["clients"].push(connection.id)
+    }
     return {"room": roomId, "type": "code_full", "lang": room["lang"], "content": room["code"]} 
   },
   "run_req": (connection, req) => {
